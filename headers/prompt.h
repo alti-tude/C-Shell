@@ -1,4 +1,4 @@
 #ifndef PROMPT_H
 #define PROMPT_H
-data init();
+void display_prompt(data);
 #endif

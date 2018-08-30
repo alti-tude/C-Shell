@@ -4,7 +4,8 @@
 #include<unistd.h>
 #include<pwd.h>
 #include<limits.h>
-#include "config.h"
+#include"headers/config.h"
+
 
 data init(){
     data ret;

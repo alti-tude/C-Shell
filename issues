@@ -1,0 +1,14 @@
+////// general ///////
+1) add functionality for ;
+2) add escape for ; in echo
+3) fix echo
+
+///// ls ///////
+4) add file type in ls -l
+6) pass the root path as some env variable?
+7) ls -la other things like date etc.
+8) make proper ls
+9) multiple directoruy names as args (should work)
+
+
+//////life//////
