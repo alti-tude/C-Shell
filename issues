@@ -1,7 +1,7 @@
 ////// general ///////
-1) add functionality for ;
 2) add escape for ; in echo
-3) fix echo
+4) cd -
+5) cd: add escape for spaces in filename and your life
 
 ///// ls ///////
 4) add file type in ls -l

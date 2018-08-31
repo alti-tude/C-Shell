@@ -20,7 +20,7 @@ void cd(char* input_dir, data d){
     char* old_dir = (char*)malloc(PATH_SIZE);
     getcwd(old_dir, PATH_SIZE);
 
-    if(input_dir == NULL) input_dir="~";
+    if(input_dir == NULL) input_dir= "~";
     if(input_dir[0]=='~') {
         char* cur = (char*)(malloc(BUF_SIZE));
         strcpy(cur, d.HOME);
@@ -40,7 +40,7 @@ void cd(char* input_dir, data d){
     }
     if(cd_err<0) {
         printf("the file or folder %s does not exist\n", input_dir);
-        chdir(d.HOME);
+        chdir(old_dir);
     }   
 }
 
