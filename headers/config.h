@@ -12,7 +12,7 @@ struct data{
 typedef struct data data;
 char* delims;
 long long int NUM_CMDS;
-
+long long int MAX_PROC;
 #endif
 
 

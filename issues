@@ -3,12 +3,11 @@
 4) cd -
 5) cd: add escape for spaces in filename and your life
 
-///// ls ///////
-4) add file type in ls -l
-6) pass the root path as some env variable?
-7) ls -la other things like date etc.
-8) make proper ls
-9) multiple directoruy names as args (should work)
+///// ls //////
+*12) allignment 
+
+/////fg bg//////
+*10) write proc_name in msg on proc exit 
 
 
 //////life//////
