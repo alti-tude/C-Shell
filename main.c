@@ -10,55 +10,9 @@
 #include"headers/ls.h"
 #include<limits.h>
 #include<sys/wait.h>
-
-void execute_this(int pid,data d, char * s){
-    char* sc = (char*)malloc(BUF_SIZE);
-    strcpy(sc, s);
-    
-    char* tok = strtok(s, delims);
-    if(tok == NULL) return;
-    // printf("%s\n", tok);
-    if(strcmp(tok, "echo")==0) echo(sc);
-    else if(strcmp(tok, "pwd")==0) pwd(d);
-    else if(strcmp(tok, "remindme")==0) remindme(d, sc);
-    else if(strcmp(tok, "clock")==0) realtime(sc);
-    else if(strcmp(tok, "cd")==0) {
-        tok = strtok(NULL, delims);
-        cd(tok, d);
-    }
-    else if(strcmp(tok, "ls")==0) {
-        char ** parsed = (char**)malloc(sizeof(char*)*10);
-        int i = 0;
-        while(tok!=NULL){
-            parsed[i] = (char*)malloc(strlen(tok));
-            strcpy(parsed[i], tok);
-            tok = strtok(NULL, delims);
-            i++;
-        }
-        ls_main(i, parsed, d);
-    }
-    else if(strcmp(tok, "pinfo")==0){
-        int i;
-        for(i=0;i<strlen(sc) && (sc[i]==' ' || sc[i]=='\t' || sc[i]=='\n');i++);
-        if(strlen(tok)==strlen(sc)-i){ 
-            int temp = getpid();
-            sprintf(tok, "%d", temp);
-        }
-        else tok = strtok(NULL, delims);
-        pinfo(tok, d);
-    }
-    else{
-        char ** parsed = (char**)malloc(sizeof(char*)*10);
-        int i = 0;
-        while(tok!=NULL){
-            parsed[i] = (char*)malloc(strlen(tok));
-            strcpy(parsed[i], tok);
-            tok = strtok(NULL, delims);
-            i++;
-        }
-        execvp(parsed[0], parsed);
-    }     
-}
+#include<sys/types.h>
+#include<sys/stat.h>
+#include<fcntl.h>
 
 int pid = 1;
 int status;
@@ -78,7 +32,6 @@ void main(){
                 if(rPID != 0){
                     fprintf(stderr, "proc with pid %d exited normally\n", child_pid[i]);
                     child_pid[i]=-1;
-                    if(WIFSTOPPED(status)) printf("hahlllahhhalhlhlhalhlhlhlhlhalhlhlhlhlalhlhlhlhlhlahlhalhhllhlhalhlahllahlhlahlhalhlahlhalhlahlahlhlhalhlahlahlahlahlahlahlahlah\n");
                 }
             }
         }
@@ -98,59 +51,39 @@ void main(){
         
         // run cmds
         for(int i=0;i<c;i++){
+            char* infil;
+            char* outfil;
+            int temp_std_in = dup(0), temp_std_out = dup(1);
+
             strcpy(sc, com_ar[i]);
-            char* temp = (char*)malloc(BUF_SIZE);
-            strcpy(temp, sc);    
-            char* tok = strtok(temp, delims);
+            char* out_redirect = strchr(sc, '>');
+            if(out_redirect!=NULL){
+                outfil = strtok(out_redirect+1, " >\t\n|");\
+                
+                int fd;
+                if(*(out_redirect+1) == '>') fd = open(outfil, O_APPEND| O_WRONLY | O_CREAT);
+                else fd = open(outfil, O_WRONLY | O_CREAT);
 
-            int f=0; //flag is not zero for bg_proc
-            for(int j=strlen(sc)-1;j>=0;j--) {   
-                char a = sc[j];
-                if(a == ' ' || a == '\t' || a== '\n') continue;
-                if(a == '&') {f=j; break;} 
-                else break;
+                dup2(fd, 1);
+
+                com_ar[i][out_redirect-sc] = '\0';
             }
 
-            if(strcmp(tok, "remindme") == 0) f=strlen(sc);
-            if(strcmp(tok, "cd")==0 || strcmp(tok, "pinfo")==0 || strcmp(tok, "clock")==0){
-                execute_this(pid, d, sc);
-                continue;
-            }
-            if(strcmp(tok,"exit")==0){
-                return;
-                // _exit(0);
-            } 
+            strcpy(sc, com_ar[i]);
+            char* in_redirect = strchr(sc, '<');
+            if(in_redirect!=NULL){
+                infil = strtok(in_redirect+1, " >\t\n|");
             
-            //fork
-            pid = fork();
-            if(f!=0) sc[f]=' ';
-            int i=0;
-            for(;i<MAX_PROC && child_pid[i]!=-1;i++);
-            if(i==MAX_PROC) {
-                printf("proc limit exceeded\n");
-                continue;
-            }
-            child_pid[i]=pid;
+                int fd = open(infil, O_RDONLY);
+                if(fd<0) perror("Error");
+                dup2(fd, 0);
 
-            //bg proc
-            if(f!=0){
-                if(pid==0) { 
-                    // printf("exec from child");
-                    execute_this(pid,d,sc);
-                    return;
-                }
+                com_ar[i][in_redirect-sc] = '\0';
             }
-            else{ //fg proc
-                if(pid==0) { //child
-                    execute_this(pid,d,sc);
-                    return;
-                }
-                else { //parent
-                    while(wait(&status)!=pid);
-                    for(i=0;i<MAX_PROC && child_pid[i]!=pid;i++);
-                    child_pid[i]=-1;
-                }
-            }
+
+            road_runner(status, pid, child_pid, d, sc, com_ar, i);
+            dup2(temp_std_in, 0);    
+            dup2(temp_std_out, 1);        
         }
     }
 }
