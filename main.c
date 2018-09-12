@@ -72,13 +72,16 @@ void main(){
     while(1){
         //check if child proc quit
         for(int i=0;i<MAX_PROC;i++)
+        {
             if(child_pid[i]!=-1){
                 int rPID = waitpid(child_pid[i], &status, WNOHANG);
                 if(rPID != 0){
                     fprintf(stderr, "proc with pid %d exited normally\n", child_pid[i]);
                     child_pid[i]=-1;
+                    if(WIFSTOPPED(status)) printf("hahlllahhhalhlhlhalhlhlhlhlhalhlhlhlhlalhlhlhlhlhlahlhalhhllhlhalhlahllahlhlahlhalhlahlhalhlahlahlhlhalhlahlahlahlahlahlahlahlah\n");
                 }
             }
+        }
         display_prompt(d);
         fgets(s, BUF_SIZE, stdin);
         
@@ -114,7 +117,8 @@ void main(){
                 continue;
             }
             if(strcmp(tok,"exit")==0){
-                _exit(0);
+                return;
+                // _exit(0);
             } 
             
             //fork
