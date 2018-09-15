@@ -10,6 +10,50 @@
 #include"headers/ls.h"
 #include<limits.h>
 #include<sys/wait.h>
+#include<sys/types.h>
+#include<sys/stat.h>
+#include<fcntl.h>
+
+void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** com_ar, int i);
+
+void road_block(int status , int pid, int* child_pid, data d, char* sc, char** com_ar, int i)
+{
+    fprintf(stderr, "DEBUG] %s\n", com_ar[i]);
+    char* infil;
+    char* outfil;
+    int temp_std_in = dup(0), temp_std_out = dup(1);
+
+    strcpy(sc, com_ar[i]);
+    char* out_redirect = strchr(sc, '>');
+    if(out_redirect!=NULL){
+        outfil = strtok(out_redirect+1, " >\t\n|");
+        
+        int fd;
+        if(*(out_redirect+1) == '>') fd = open(outfil, O_APPEND| O_WRONLY | O_CREAT, 0644);
+        else fd = open(outfil, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+
+        dup2(fd, 1);
+
+        com_ar[i][out_redirect-sc] = '\0';
+    }
+
+    strcpy(sc, com_ar[i]);
+    char* in_redirect = strchr(sc, '<');
+    if(in_redirect!=NULL){
+        infil = strtok(in_redirect+1, " >\t\n|");
+    
+        int fd = open(infil, O_RDONLY);
+        if(fd<0) perror("Error");
+        dup2(fd, 0);
+
+        com_ar[i][in_redirect-sc] = '\0';
+    }
+
+    road_runner(status, pid, child_pid, d, sc, com_ar, i);
+    dup2(temp_std_in, 0);    
+    dup2(temp_std_out, 1);  
+}
+
 
 
 void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** com_ar, int i){
@@ -60,10 +104,13 @@ void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** 
     }
     else{ //fg proc
         if(pid==0) { //child
+    fprintf(stderr, "DEBUG] executing %s\n", sc);
+
             execute_this(pid,d,sc);
             _exit(0);
         }
         else { //parent
+
             while(wait(&status)!=pid);
             for(i=0;i<MAX_PROC && child_pid[i]!=pid;i++);
             child_pid[i]=-1;

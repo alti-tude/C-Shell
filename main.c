@@ -51,39 +51,39 @@ void main(){
         
         // run cmds
         for(int i=0;i<c;i++){
-            char* infil;
-            char* outfil;
-            int temp_std_in = dup(0), temp_std_out = dup(1);
+            char* command = (char*) malloc(BUF_SIZE);
+            strcpy(command, com_ar[i]);
+            char** com_ar2 = (char**) malloc(1000*sizeof(char*));
+            char* tok = strtok(command, "|\n");
+            int c2=0;
+            while(tok!=NULL){
+                com_ar2[c2] = (char*) malloc(BUF_SIZE);
+                strcpy(com_ar2[c2], tok);
+                tok = strtok(NULL, "|\n");
+                c2++;
+            }
+            int pipeFD[2];
 
-            strcpy(sc, com_ar[i]);
-            char* out_redirect = strchr(sc, '>');
-            if(out_redirect!=NULL){
-                outfil = strtok(out_redirect+1, " >\t\n|");\
+            int act_std_in = dup(0), act_std_out = dup(1);
+            int cur=2;
+            int read = 0, write = 1;
+
+            for(int j=0;j<c2;j++){ 
+                if(read!=0) dup2(read, 0), close(read);                
+                pipe(pipeFD);
                 
-                int fd;
-                if(*(out_redirect+1) == '>') fd = open(outfil, O_APPEND| O_WRONLY | O_CREAT);
-                else fd = open(outfil, O_WRONLY | O_CREAT);
+                write = pipeFD[1];
+                dup2(write, 1), close(write);
 
-                dup2(fd, 1);
+                if(j==c2-1) dup2(act_std_out, 1), fprintf(stderr, "adsdasdda%d%d\n", j, c2);
+                road_block(status , pid, child_pid, d, sc, com_ar2, j);   
 
-                com_ar[i][out_redirect-sc] = '\0';
+                read = pipeFD[0];                
             }
 
-            strcpy(sc, com_ar[i]);
-            char* in_redirect = strchr(sc, '<');
-            if(in_redirect!=NULL){
-                infil = strtok(in_redirect+1, " >\t\n|");
-            
-                int fd = open(infil, O_RDONLY);
-                if(fd<0) perror("Error");
-                dup2(fd, 0);
-
-                com_ar[i][in_redirect-sc] = '\0';
-            }
-
-            road_runner(status, pid, child_pid, d, sc, com_ar, i);
-            dup2(temp_std_in, 0);    
-            dup2(temp_std_out, 1);        
+            fprintf(stderr, "done\n");
+            dup2(act_std_in, 0);
+            dup2(act_std_out,1);
         }
     }
 }
