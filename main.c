@@ -65,7 +65,6 @@ void main(){
             int pipeFD[2];
 
             int act_std_in = dup(0), act_std_out = dup(1);
-            int cur=2;
             int read = 0, write = 1;
 
             for(int j=0;j<c2;j++){ 
@@ -73,13 +72,35 @@ void main(){
                 pipe(pipeFD);
                 
                 write = pipeFD[1];
+                read = pipeFD[0];  
                 dup2(write, 1), close(write);
 
                 if(j==c2-1) dup2(act_std_out, 1), fprintf(stderr, "adsdasdda%d%d\n", j, c2);
-                road_block(status , pid, child_pid, d, sc, com_ar2, j);   
-
-                read = pipeFD[0];                
+                road_runner(status , pid, child_pid, d, sc, com_ar2, j);   
+              
             }
+
+            // int act_std_in = dup(0), act_std_out = dup(1);
+            // int read = dup(0);
+            // int write = dup(1);
+
+            // for(int j=0; j<c2; ++j) {
+            //     dup2(read, 0);
+            //     close(read);
+
+            //     if(j==c2-1) write = dup(act_std_out);
+            //     else{
+            //         int pipefd[2];
+            //         pipe(pipefd);
+            //         write = pipefd[1];
+            //         read = pipefd[0];
+            //     }
+
+            //     dup2(write,1);
+            //     close(write);
+
+            //     road_runner(status , pid, child_pid, d, sc, com_ar2, j);
+            // }
 
             fprintf(stderr, "done\n");
             dup2(act_std_in, 0);
