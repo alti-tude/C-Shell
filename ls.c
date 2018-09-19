@@ -149,7 +149,7 @@ void ls_main(int argc, char* argv[], data d){
     char*flags=(char*)malloc(100); 
     
     if(fc[0]==1) strcat(flags, "l");
-    if(fc[0]==1) strcat(flags, "a");
+    if(fc[1]==1) strcat(flags, "a");
     if(fc[0]==0 && fc[1]==0) {
         strcpy(flags, "none");
     }

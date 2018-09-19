@@ -1,1 +1,15 @@
-a 
+builtins.c
+config.c
+execute_command.c
+headers
+issues
+ls.c
+main.c
+makefile
+ouot
+parsing_with_bg.c
+prompt.c
+README.md
+shell
+TRIAL
+utilities.c

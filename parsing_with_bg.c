@@ -18,7 +18,6 @@ void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** 
 
 void road_block(int status , int pid, int* child_pid, data d, char* sc, char** com_ar, int i)
 {
-    fprintf(stderr, "DEBUG] %s\n", com_ar[i]);
     char* infil;
     char* outfil;
     int temp_std_in = dup(0), temp_std_out = dup(1);
@@ -33,7 +32,7 @@ void road_block(int status , int pid, int* child_pid, data d, char* sc, char** c
         else fd = open(outfil, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 
         dup2(fd, 1);
-
+        close(fd);
         com_ar[i][out_redirect-sc] = '\0';
     }
 
@@ -45,13 +44,15 @@ void road_block(int status , int pid, int* child_pid, data d, char* sc, char** c
         int fd = open(infil, O_RDONLY);
         if(fd<0) perror("Error");
         dup2(fd, 0);
-
+        close(fd);
         com_ar[i][in_redirect-sc] = '\0';
     }
 
     road_runner(status, pid, child_pid, d, sc, com_ar, i);
-    dup2(temp_std_in, 0);    
-    dup2(temp_std_out, 1);  
+    dup2(temp_std_in, 0);   
+    close(temp_std_in); 
+    dup2(temp_std_out, 1);
+    close(temp_std_out);  
 }
 
 
@@ -104,7 +105,6 @@ void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** 
     }
     else{ //fg proc
         if(pid==0) { //child
-    fprintf(stderr, "DEBUG] executing %s\n", sc);
 
             execute_this(pid,d,sc);
             _exit(0);

@@ -56,7 +56,6 @@ void execute_this(int pid,data d, char * s){
             tok = strtok(NULL, delims);
             i++;
         }
-    fprintf(stderr, "DEBUG] child exec waiting\n");
 
         execvp(parsed[0], parsed);
     }     
