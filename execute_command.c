@@ -11,7 +11,7 @@
 #include<limits.h>
 #include<sys/wait.h>
 
-void execute_this(int pid,data d, char * s){
+void execute_this(int pid,data d, char * s, int* child_pid, char** names){
     char* sc = (char*)malloc(BUF_SIZE);
     strcpy(sc, s);
     
@@ -47,6 +47,11 @@ void execute_this(int pid,data d, char * s){
         else tok = strtok(NULL, delims);
         pinfo(tok, d);
     }
+    else if(strcmp(tok, "jobs")==0){
+        jobs(child_pid, names);
+    }
+    else if(strcmp(tok, "setenv")==0) 
+        setEnv(sc);
     else{
         char ** parsed = (char**)malloc(sizeof(char*)*10);
         int i = 0;

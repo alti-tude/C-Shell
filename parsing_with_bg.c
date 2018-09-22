@@ -14,9 +14,9 @@
 #include<sys/stat.h>
 #include<fcntl.h>
 
-void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** com_ar, int i);
+void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** com_ar, int i, char** names);
 
-void road_block(int status , int pid, int* child_pid, data d, char* sc, char** com_ar, int i)
+void road_block(int status , int pid, int* child_pid, data d, char* sc, char** com_ar, int i, char** names)
 {
     char* infil;
     char* outfil;
@@ -48,7 +48,7 @@ void road_block(int status , int pid, int* child_pid, data d, char* sc, char** c
         com_ar[i][in_redirect-sc] = '\0';
     }
 
-    road_runner(status, pid, child_pid, d, sc, com_ar, i);
+    road_runner(status, pid, child_pid, d, sc, com_ar, i, names);
     dup2(temp_std_in, 0);   
     close(temp_std_in); 
     dup2(temp_std_out, 1);
@@ -57,7 +57,7 @@ void road_block(int status , int pid, int* child_pid, data d, char* sc, char** c
 
 
 
-void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** com_ar, int i){
+void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** com_ar, int i, char** names){
     strcpy(sc, com_ar[i]);
     char* temp = (char*)malloc(BUF_SIZE);
     strcpy(temp, sc);    
@@ -75,8 +75,8 @@ void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** 
     }
 
     if(strcmp(tok, "remindme") == 0) f=strlen(sc);
-    if(strcmp(tok, "cd")==0 || strcmp(tok, "pinfo")==0 || strcmp(tok, "clock")==0){
-        execute_this(pid, d, sc);
+    if(strcmp(tok, "cd")==0 || strcmp(tok, "jobs") == 0 || strcmp(tok, "pinfo")==0 || strcmp(tok, "clock")==0 || strcmp(tok, "setenv")==0){
+        execute_this(pid, d, sc, child_pid, names);
         return;
     }
     if(strcmp(tok,"exit")==0){
@@ -94,20 +94,21 @@ void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** 
         _exit(0);
     }
     child_pid[i]=pid;
-
+    names[i] = (char*)malloc(BUF_SIZE);
+    strcpy(names[i], sc);
     //bg proc
+
     if(f!=0){
         if(pid==0) { 
             // printf("exec from child");
-            execute_this(pid,d,sc);
-            _exit(0);
+            execute_this(pid,d,sc, child_pid, names);
+            return;
         }
     }
     else{ //fg proc
         if(pid==0) { //child
-
-            execute_this(pid,d,sc);
-            _exit(0);
+            execute_this(pid,d,sc, child_pid, names);
+            return;
         }
         else { //parent
 

@@ -6,11 +6,14 @@
 #include"headers/config.h"
 #include"headers/utilities.h"
 #include"headers/prompt.h"
+#include"headers/builtins.h"
+#include"headers/ls.h"
 #include<limits.h>
+#include<sys/wait.h>
 #include<sys/types.h>
 #include<sys/stat.h>
-#include<signal.h>
 #include<fcntl.h>
+#include<signal.h>
 
 void pwd(data d){
     char* cur_dir = (char*)malloc(PATH_SIZE);
@@ -52,7 +55,9 @@ void echo(char* buf){
     if(tok==NULL) return;
     else tok = strtok(NULL, delims);
     while(tok!=NULL){
-        printf("%s ", tok);
+        if(tok[0]!='$') printf("%s ", tok);
+        else printf("%s ", getenv(tok+1));
+        
         tok = strtok(NULL, delims);
     }
     printf("\n");
@@ -64,10 +69,10 @@ void pinfo(char* pid, data d){
     sprintf(proc_file_name, "/proc/%s/stat", pid);
 
     int fd = open(proc_file_name, O_RDONLY);
-    if(fd<0) printf("process does not exist");
-    struct stat f_stat;
+    if(fd<0) {printf("process does not exist\n"); return;}
+    // struct stat f_stat;
     
-    fstat(fd, &f_stat);
+    // fstat(fd, &f_stat);
     read(fd, proc_file_name, 1000);
     printf("PID -- %s\n", pid);
     char *tok = strtok(proc_file_name, delims);
@@ -100,7 +105,11 @@ void remindme(data d, char *s){
     }
     long long int c = 0;
     char **crap  = &(ar[2])-1;
-    if(i!=3 || (c=strtol(ar[1], crap, 10))==0) printf("Usage: remindme [time!=0] [msg]");
+    if(i!=3 || (c=strtol(ar[1], crap, 10))==0) 
+    {
+        printf("Usage: remindme [time!=0] [msg]");
+        return;
+    }
     sleep(c);
     printf("\nREMINDER \\{oo}/ %s\n", ar[2]);
     display_prompt(d);
@@ -160,6 +169,105 @@ void realtime(char* sc){
     }
     else printf("Usage: clock [-t] [gap !=0]\n");
     st = 0;
-
 }
 
+
+void setEnv(char* sc){
+    char *tok = strtok(sc, " \n");
+    char** com = (char**)(malloc(sizeof(char*)*10));
+
+    int i = 0;
+    while(tok!=NULL) 
+    {   
+        com[i] = (char*)malloc(BUF_SIZE);
+        strcpy(com[i], tok);
+        i++;
+        tok = strtok(NULL, " \n");
+    }
+
+    char* temp = (char*)malloc(BUF_SIZE);
+    sprintf(temp, "%s=%s", com[1], com[2]);
+    if(i==2) setenv(com[1], "", 1);
+    else if(i==3) printf("%d\n", setenv(com[1], com[2], 1));
+    else printf("Usage: setenv variable [value]\n");
+}
+
+
+
+void jobs(int* child_pid, char** names){
+    int creationTime[MAX_PROC];
+    for(int i=0;i<MAX_PROC;i++){
+        creationTime[i] = -1;
+        if(child_pid[i]!=-1){
+            int status;
+            int pid = child_pid[i];
+            int rPID = waitpid(child_pid[i], &status, WNOHANG);
+            // {
+            //     fprintf(stderr, "proc with pid %d exited normally\n", pid);
+            //     child_pid[i]=-1;
+            // }
+            if(rPID == 0){
+                char *proc_file_name = (char*)malloc(BUF_SIZE);
+                sprintf(proc_file_name, "/proc/%d/stat", pid);
+                char buf[1000];
+
+                int fd = open(proc_file_name, O_RDONLY);
+                if(fd<0) continue;
+                read(fd, buf, 1000);
+
+                int c = 1;
+                char *tok = strtok(buf, " \n");
+                while(tok!=NULL){
+                    if(c==22) break;
+                    tok = strtok(NULL, " \n");
+                    c++;
+                }
+                char* crap = tok + strlen(tok)-1;
+                creationTime[i] = strtol(tok, &crap, 10);
+            }
+            
+        }
+    }
+    int sorted[MAX_PROC];
+    int c = 0;
+
+    for(int i=0;i<MAX_PROC;i++){
+        long long int mi=LLONG_MAX, mid=-1;
+
+        for(int j=0;j<MAX_PROC; j++){
+            if(creationTime[j]!=-1){
+                if(mi>creationTime[j]){
+                    mi = creationTime[j];
+                    mid = j;
+                }
+            }
+        }
+        if(mid==-1) break;
+        sorted[c++] = mid; 
+        creationTime[mid]=-1;
+    }
+
+    for(int i=0;i<c; i++){
+        int pid = child_pid[sorted[i]];
+        char *proc_file_name = (char*)malloc(BUF_SIZE);
+        sprintf(proc_file_name, "/proc/%d/stat", pid);
+        char buf[1000];
+
+        int fd = open(proc_file_name, O_RDONLY);
+        if(fd<0) continue;
+        read(fd, buf, 1000);
+
+        printf("[%d]\t", i+1);
+        
+        int c = 1;
+        char *tok = strtok(buf, " \n");
+        while(tok!=NULL){
+            if(c==3) break;
+            tok = strtok(NULL, " \n");
+            c++;
+        }
+
+        printf("%s\t", tok);
+        printf("%s[%d]\n", names[sorted[i]], pid);
+    }
+}

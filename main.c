@@ -21,6 +21,7 @@ void main(){
     char* s = (char*)malloc(BUF_SIZE);
     char* sc = (char*)malloc(BUF_SIZE);
     int* child_pid = (int*)malloc(sizeof(int)*MAX_PROC);
+    char** names = (char**)malloc(sizeof(char*)*MAX_PROC);
     for(int i=0;i<MAX_PROC;i++) child_pid[i]=-1;
 
     while(1){
@@ -76,11 +77,9 @@ void main(){
                 dup2(write, 1), close(write);
 
                 if(j==c2-1) dup2(act_std_out, 1);
-                road_block(status , pid, child_pid, d, sc, com_ar2, j);   
+                road_block(status , pid, child_pid, d, sc, com_ar2, j, names);   
               
             }
-
-
             dup2(act_std_in, 0);
             dup2(act_std_out,1);
         }
