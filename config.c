@@ -8,3 +8,4 @@ long long int MAX_PROC = 10;
 
 int kill_proc = 0;
 int sent_to_bg = 0;
+int quit_proc = 0;

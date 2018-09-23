@@ -43,8 +43,8 @@ void road_block(int status , int pid, int* child_pid, data d, char* sc, char** c
         infil = strtok(in_redirect+1, " >\t\n|");
     
         int fd = open(infil, O_RDONLY);
-        if(fd<0) perror("Error");
-        dup2(fd, 0);
+        if(fd<0) {perror("Error"); return;}
+        else dup2(fd, 0);
         close(fd);
         com_ar[i][in_redirect-sc] = '\0';
     }
@@ -55,7 +55,6 @@ void road_block(int status , int pid, int* child_pid, data d, char* sc, char** c
     dup2(temp_std_out, 1);
     close(temp_std_out); 
     if(kill_proc == 1) return;
-
 }
 
 void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** com_ar, int i, char** names){
@@ -80,7 +79,7 @@ void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** 
         execute_this(pid, d, sc, child_pid, names);
         return;
     }
-    if(strcmp(tok,"exit")==0 ){
+    if(strcmp(tok,"quit")==0 ){
         // return;
         _exit(0);
     } 
@@ -115,12 +114,17 @@ void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** 
         else { //parent
 
             signal(SIGTSTP, handleZ);
-            while(!sent_to_bg && waitpid(pid, &status, WNOHANG)!=pid);
+            signal(SIGINT, handleC);
+
+            while(!sent_to_bg && !quit_proc && waitpid(pid, &status, WNOHANG)!=pid);
             if(!sent_to_bg){
                 for(i=0;i<MAX_PROC && child_pid[i]!=pid;i++);
                 child_pid[i]=-1;
             }
+            else kill(child_pid[i], SIGSTOP);
+            if(quit_proc) kill(child_pid[i], 9);
             sent_to_bg = 0;
+            quit_proc = 0;
         }
     }
 

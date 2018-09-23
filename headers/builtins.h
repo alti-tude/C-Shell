@@ -15,4 +15,5 @@ void bg(char* sc, int* child_pid);
 void overkill(int* child_pid);
 void jobs(int *child_pid, char** names);
 void handleZ();
+void handleC();
 #endif

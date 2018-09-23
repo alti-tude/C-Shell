@@ -226,6 +226,10 @@ void handleZ(){
     sent_to_bg = 1;
 }
 
+void handleC(){
+    quit_proc = 1;
+}
+
 void fg(char* sc, int* child_pid){
     char *tok = strtok(sc, " \n");
     char** com = (char**)(malloc(sizeof(char*)*10));
@@ -247,8 +251,11 @@ void fg(char* sc, int* child_pid){
         int status;
         if(jobID<MAX_PROC && job_order[jobID] >= 0) {
             signal(SIGTSTP, handleZ);
-            while(!sent_to_bg && waitpid(child_pid[job_order[jobID]], &status, WNOHANG)!=child_pid[job_order[jobID]]);
-            sent_to_bg = 1;
+            signal(SIGINT, handleC);
+            while(!sent_to_bg && !quit_proc && waitpid(child_pid[job_order[jobID]], &status, WNOHANG)!=child_pid[job_order[jobID]]);
+            if(quit_proc) kill(child_pid[job_order[jobID]], 9);
+            sent_to_bg = 0;
+            quit_proc = 0;
         }
         else printf("Usage: fg job_id[must exist]\n");
     }

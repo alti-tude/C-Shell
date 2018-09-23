@@ -13,6 +13,7 @@
 #include<sys/types.h>
 #include<sys/stat.h>
 #include<fcntl.h>
+#include<signal.h>
 
 int pid = 1;
 int status;
@@ -48,6 +49,11 @@ void main(){
 
     for(int i=0;i<MAX_PROC;i++) child_pid[i]=-1, creationTime[i]=-1;
     while(1){
+        signal(SIGINT, handleC);
+        signal(SIGTSTP, handleZ);
+
+        quit_proc = 0;
+        sent_to_bg = 0; 
         //check if child proc quit and update creationTime
         for(int i=0;i<MAX_PROC;i++) creationTime[i]=-1;
 

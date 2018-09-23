@@ -16,6 +16,7 @@ long long int MAX_PROC;
 
 int kill_proc;
 int sent_to_bg;
+int quit_proc;
 int *job_order;
 #endif
 
