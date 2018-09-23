@@ -252,8 +252,16 @@ void fg(char* sc, int* child_pid){
         if(jobID<MAX_PROC && job_order[jobID] >= 0) {
             signal(SIGTSTP, handleZ);
             signal(SIGINT, handleC);
+            // tcsetpgrp(0, child_pid[job_order[jobID]]);
             while(!sent_to_bg && !quit_proc && waitpid(child_pid[job_order[jobID]], &status, WNOHANG)!=child_pid[job_order[jobID]]);
             if(quit_proc) kill(child_pid[job_order[jobID]], 9);
+
+            int pid = child_pid[job_order[jobID]];
+            if(sent_to_bg){
+                kill(child_pid[job_order[jobID]], SIGSTOP);
+                setpgid(pid, pid);            
+            }
+
             sent_to_bg = 0;
             quit_proc = 0;
         }

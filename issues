@@ -7,9 +7,6 @@
 *12) allignment 
 
 /////fg bg//////
-*10) write proc_name in msg on proc exit 
-*13) just pinfo(print shell data)
-*14) pinfo for gibrish pid (bad error)
 
 ///// jobs /////
 15*) full words for status of proc

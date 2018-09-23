@@ -100,9 +100,20 @@ void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** 
 
     if(f!=0){
         if(pid==0) { 
+            signal(SIGTSTP, handleZ);
+            signal(SIGINT, handleC);
+            quit_proc = 0;
+            sent_to_bg = 0;
             execute_this(pid,d,sc, child_pid, names);
             kill_proc = 1;
             return;
+        }
+        else{
+            setpgid(pid, pid);
+            signal(SIGTSTP, handleZ);
+            signal(SIGINT, handleC);
+            quit_proc = 0;
+            sent_to_bg = 0;
         }
     }
     else{ //fg proc
@@ -112,17 +123,20 @@ void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** 
             return;
         }
         else { //parent
-
             signal(SIGTSTP, handleZ);
             signal(SIGINT, handleC);
 
             while(!sent_to_bg && !quit_proc && waitpid(pid, &status, WNOHANG)!=pid);
+	        for(i=0;i<MAX_PROC && child_pid[i]!=pid;i++);
             if(!sent_to_bg){
-                for(i=0;i<MAX_PROC && child_pid[i]!=pid;i++);
                 child_pid[i]=-1;
             }
-            else kill(child_pid[i], SIGSTOP);
-            if(quit_proc) kill(child_pid[i], 9);
+            else {
+                kill(child_pid[i], SIGSTOP);
+                setpgid(pid, pid);            
+            }
+            
+            if(quit_proc && child_pid[i]!=-1) kill(child_pid[i], 9);
             sent_to_bg = 0;
             quit_proc = 0;
         }
