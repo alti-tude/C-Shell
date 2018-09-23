@@ -4,6 +4,7 @@
         "fcntl.h": "c",
         "stdlib.h": "c",
         "utilities.h": "c",
-        "prompt.h": "c"
+        "prompt.h": "c",
+        "type_traits": "c"
     }
 }

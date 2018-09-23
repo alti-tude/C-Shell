@@ -19,7 +19,6 @@ void pwd(data d){
     char* cur_dir = (char*)malloc(PATH_SIZE);
     getcwd(cur_dir, PATH_SIZE);
     printf("%s\n", cur_dir);
-    // printf("/home/%s%s\n",d.user,&cur_dir[strlen(d.HOME)]);
 }
 
 void cd(char* input_dir, data d){
@@ -35,15 +34,6 @@ void cd(char* input_dir, data d){
     }
 
     int cd_err = chdir(input_dir);
-    // char* new_dir = (char*)malloc(PATH_SIZE);
-    // getcwd(new_dir, PATH_SIZE);
-
-    // for(int i=0;i<strlen(d.HOME);i++){
-    //     if(d.HOME[i]!=new_dir[i]){
-    //         cd_err=-1;
-    //         break;
-    //     }
-    // }
     if(cd_err<0) {
         printf("the file or folder %s does not exist\n", input_dir);
         chdir(old_dir);
@@ -70,9 +60,9 @@ void pinfo(char* pid, data d){
 
     int fd = open(proc_file_name, O_RDONLY);
     if(fd<0) {printf("process does not exist\n"); return;}
-    // struct stat f_stat;
+    struct stat f_stat;
     
-    // fstat(fd, &f_stat);
+    fstat(fd, &f_stat);
     read(fd, proc_file_name, 1000);
     printf("PID -- %s\n", pid);
     char *tok = strtok(proc_file_name, delims);
@@ -137,8 +127,6 @@ void realtime(char* sc){
     char ** end;
     if(i!=1){
         temp = ar[2]+strlen(ar[2])-1;
-        // printf("%d\n", i);
-        // sleep(1000);
         end = &temp;
         c=strtol(ar[2],end,10);
     }
@@ -185,14 +173,119 @@ void setEnv(char* sc){
         tok = strtok(NULL, " \n");
     }
 
-    char* temp = (char*)malloc(BUF_SIZE);
-    sprintf(temp, "%s=%s", com[1], com[2]);
     if(i==2) setenv(com[1], "", 1);
-    else if(i==3) printf("%d\n", setenv(com[1], com[2], 1));
+    else if(i==3) setenv(com[1], com[2], 1);
     else printf("Usage: setenv variable [value]\n");
 }
 
+void unsetEnv(char* sc){
+    char *tok = strtok(sc, " \n");
+    char** com = (char**)(malloc(sizeof(char*)*10));
 
+    int i = 0;
+    while(tok!=NULL) 
+    {   
+        com[i] = (char*)malloc(BUF_SIZE);
+        strcpy(com[i], tok);
+        i++;
+        tok = strtok(NULL, " \n");
+    }
+
+    if(i==2) unsetenv(com[1]);
+    else printf("Usage: unsetenv variable\n");
+}
+
+void kjob(char* sc, int* child_pid){
+    char *tok = strtok(sc, " \n");
+    char** com = (char**)(malloc(sizeof(char*)*10));
+
+    int i = 0;
+    while(tok!=NULL) 
+    {   
+        com[i] = (char*)malloc(BUF_SIZE);
+        strcpy(com[i], tok);
+        i++;
+        tok = strtok(NULL, " \n");
+    }
+    
+    if(i==3){
+        char* crap = com[2] + strlen(com[2])-1;
+        int sig = strtol(com[2], &crap, 10);
+
+        crap = com[1] + strlen(com[1])-1;
+        int jobID = strtol(com[1], &crap, 10);
+        jobID--;
+        if(jobID<MAX_PROC && job_order[jobID] >= 0) 
+            kill(child_pid[job_order[jobID]], sig);
+        else printf("Usage: kjob job_id[must exist] signal\n");
+    }
+    else printf("Usage: kjob job_id signal\n");
+}
+
+void handleZ(){
+    sent_to_bg = 1;
+}
+
+void fg(char* sc, int* child_pid){
+    char *tok = strtok(sc, " \n");
+    char** com = (char**)(malloc(sizeof(char*)*10));
+
+    int i = 0;
+    while(tok!=NULL) 
+    {   
+        com[i] = (char*)malloc(BUF_SIZE);
+        strcpy(com[i], tok);
+        i++;
+        tok = strtok(NULL, " \n");
+    }
+
+    if(i==2){
+        char* crap = com[1] + strlen(com[1])-1;
+        int jobID = strtol(com[1], &crap, 10);
+        jobID--;
+
+        int status;
+        if(jobID<MAX_PROC && job_order[jobID] >= 0) {
+            signal(SIGTSTP, handleZ);
+            while(!sent_to_bg && waitpid(child_pid[job_order[jobID]], &status, WNOHANG)!=child_pid[job_order[jobID]]);
+            sent_to_bg = 1;
+        }
+        else printf("Usage: fg job_id[must exist]\n");
+    }
+    else printf("Usage: fg job_id\n");
+}
+
+void bg(char* sc, int* child_pid){
+    char *tok = strtok(sc, " \n");
+    char** com = (char**)(malloc(sizeof(char*)*10));
+
+    int i = 0;
+    while(tok!=NULL) 
+    {   
+        com[i] = (char*)malloc(BUF_SIZE);
+        strcpy(com[i], tok);
+        i++;
+        tok = strtok(NULL, " \n");
+    }
+
+    if(i==2){
+        char* crap = com[1] + strlen(com[1])-1;
+        int jobID = strtol(com[1], &crap, 10);
+        jobID--;
+
+        int status;
+        if(jobID<MAX_PROC && job_order[jobID] >= 0) 
+            kill(child_pid[job_order[jobID]], SIGCONT);
+        else printf("Usage: bg job_id[must exist]\n");
+    }
+    else printf("Usage: bg job_id\n");
+}
+
+void overkill(int* child_pid){
+    for(int i=0;i<MAX_PROC;i++)
+        if(child_pid[i]!=-1)
+            kill(child_pid[i], 9);
+}
 
 void jobs(int* child_pid, char** names){
     int creationTime[MAX_PROC];
@@ -202,10 +295,6 @@ void jobs(int* child_pid, char** names){
             int status;
             int pid = child_pid[i];
             int rPID = waitpid(child_pid[i], &status, WNOHANG);
-            // {
-            //     fprintf(stderr, "proc with pid %d exited normally\n", pid);
-            //     child_pid[i]=-1;
-            // }
             if(rPID == 0){
                 char *proc_file_name = (char*)malloc(BUF_SIZE);
                 sprintf(proc_file_name, "/proc/%d/stat", pid);

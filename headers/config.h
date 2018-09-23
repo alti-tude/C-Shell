@@ -13,6 +13,10 @@ typedef struct data data;
 char* delims;
 long long int NUM_CMDS;
 long long int MAX_PROC;
+
+int kill_proc;
+int sent_to_bg;
+int *job_order;
 #endif
 
 

@@ -16,26 +16,77 @@
 
 int pid = 1;
 int status;
+
+void update_jobs(int* creationTime){
+    int c = 0;
+    job_order = (int*)malloc(sizeof(int)*MAX_PROC);
+    for(int i=0;i<MAX_PROC;i++) job_order[i]=-1;
+    for(int i=0;i<MAX_PROC;i++){
+        long long int mi=LLONG_MAX, mid=-1;
+
+        for(int j=0;j<MAX_PROC; j++){
+            if(creationTime[j]!=-1){
+                if(mi>creationTime[j]){
+                    mi = creationTime[j];
+                    mid = j;
+                }
+            }
+        }
+        if(mid==-1) break;
+        job_order[c++] = mid; 
+        creationTime[mid]=-1;
+    }
+}
+
 void main(){
     data d = init();
     char* s = (char*)malloc(BUF_SIZE);
     char* sc = (char*)malloc(BUF_SIZE);
     int* child_pid = (int*)malloc(sizeof(int)*MAX_PROC);
     char** names = (char**)malloc(sizeof(char*)*MAX_PROC);
-    for(int i=0;i<MAX_PROC;i++) child_pid[i]=-1;
+    int creationTime[MAX_PROC];
 
+    for(int i=0;i<MAX_PROC;i++) child_pid[i]=-1, creationTime[i]=-1;
     while(1){
-        //check if child proc quit
+        //check if child proc quit and update creationTime
+        for(int i=0;i<MAX_PROC;i++) creationTime[i]=-1;
+
         for(int i=0;i<MAX_PROC;i++)
         {
             if(child_pid[i]!=-1){
                 int rPID = waitpid(child_pid[i], &status, WNOHANG);
                 if(rPID != 0){
-                    fprintf(stderr, "proc with pid %d exited normally\n", child_pid[i]);
+                    fprintf(stderr, "%s with pid %d exited normally\n", names[i], child_pid[i]);
                     child_pid[i]=-1;
+                }
+                else{
+                    int status;
+                    int pid = child_pid[i];
+                    int rPID = waitpid(child_pid[i], &status, WNOHANG);
+                    if(rPID == 0){
+                        char *proc_file_name = (char*)malloc(BUF_SIZE);
+                        sprintf(proc_file_name, "/proc/%d/stat", pid);
+                        char buf[1000];
+
+                        int fd = open(proc_file_name, O_RDONLY);
+                        if(fd<0) continue;
+                        read(fd, buf, 1000);
+
+                        int c = 1;
+                        char *tok = strtok(buf, " \n");
+                        while(tok!=NULL){
+                            if(c==22) break;
+                            tok = strtok(NULL, " \n");
+                            c++;
+                        }
+                        char* crap = tok + strlen(tok)-1;
+                        creationTime[i] = strtol(tok, &crap, 10);
+                    }
                 }
             }
         }
+
+        update_jobs(creationTime);
         display_prompt(d);
         fgets(s, BUF_SIZE, stdin);
         
@@ -83,5 +134,8 @@ void main(){
             dup2(act_std_in, 0);
             dup2(act_std_out,1);
         }
+
+
+        if(kill_proc == 1) return;
     }
 }

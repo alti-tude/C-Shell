@@ -13,6 +13,7 @@
 #include<sys/types.h>
 #include<sys/stat.h>
 #include<fcntl.h>
+#include<signal.h>
 
 void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** com_ar, int i, char** names);
 
@@ -52,10 +53,10 @@ void road_block(int status , int pid, int* child_pid, data d, char* sc, char** c
     dup2(temp_std_in, 0);   
     close(temp_std_in); 
     dup2(temp_std_out, 1);
-    close(temp_std_out);  
+    close(temp_std_out); 
+    if(kill_proc == 1) return;
+
 }
-
-
 
 void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** com_ar, int i, char** names){
     strcpy(sc, com_ar[i]);
@@ -75,11 +76,11 @@ void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** 
     }
 
     if(strcmp(tok, "remindme") == 0) f=strlen(sc);
-    if(strcmp(tok, "cd")==0 || strcmp(tok, "jobs") == 0 || strcmp(tok, "pinfo")==0 || strcmp(tok, "clock")==0 || strcmp(tok, "setenv")==0){
+    if(strcmp(tok, "overkill")==0 || strcmp(tok, "bg") ==0 || strcmp(tok, "fg")==0 || strcmp(tok, "kjob") == 0 || strcmp(tok, "unsetenv")==0 || strcmp(tok, "cd")==0 || strcmp(tok, "jobs") == 0 || strcmp(tok, "pinfo")==0 || strcmp(tok, "clock")==0 || strcmp(tok, "setenv")==0){
         execute_this(pid, d, sc, child_pid, names);
         return;
     }
-    if(strcmp(tok,"exit")==0){
+    if(strcmp(tok,"exit")==0 ){
         // return;
         _exit(0);
     } 
@@ -100,21 +101,26 @@ void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** 
 
     if(f!=0){
         if(pid==0) { 
-            // printf("exec from child");
             execute_this(pid,d,sc, child_pid, names);
+            kill_proc = 1;
             return;
         }
     }
     else{ //fg proc
         if(pid==0) { //child
             execute_this(pid,d,sc, child_pid, names);
+            kill_proc = 1;
             return;
         }
         else { //parent
 
-            while(wait(&status)!=pid);
-            for(i=0;i<MAX_PROC && child_pid[i]!=pid;i++);
-            child_pid[i]=-1;
+            signal(SIGTSTP, handleZ);
+            while(!sent_to_bg && waitpid(pid, &status, WNOHANG)!=pid);
+            if(!sent_to_bg){
+                for(i=0;i<MAX_PROC && child_pid[i]!=pid;i++);
+                child_pid[i]=-1;
+            }
+            sent_to_bg = 0;
         }
     }
 

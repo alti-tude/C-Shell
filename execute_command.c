@@ -47,11 +47,20 @@ void execute_this(int pid,data d, char * s, int* child_pid, char** names){
         else tok = strtok(NULL, delims);
         pinfo(tok, d);
     }
-    else if(strcmp(tok, "jobs")==0){
+    else if(strcmp(tok, "jobs")==0)
         jobs(child_pid, names);
-    }
     else if(strcmp(tok, "setenv")==0) 
         setEnv(sc);
+    else if(strcmp(tok, "unsetenv")==0)
+        unsetEnv(sc);
+    else if(strcmp(tok, "kjob")==0)
+        kjob(sc, child_pid);
+    else if(strcmp(tok, "fg")==0)
+        fg(sc, child_pid);
+    else if(strcmp(tok, "bg")==0)
+        bg(sc, child_pid);
+    else if(strcmp(tok, "overkill")==0)
+        overkill(child_pid);
     else{
         char ** parsed = (char**)malloc(sizeof(char*)*10);
         int i = 0;
