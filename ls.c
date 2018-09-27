@@ -13,7 +13,7 @@
 
 
 void usage(){
-    printf("Usage: ls [flags] [args]\n");
+    fprintf(stderr,"Usage: ls [flags] [args]\n");
 }
 
 void print_perm(char *file){
@@ -133,7 +133,8 @@ void ls(char* flags, char* folder, data d){
 void ls_main(int argc, char* argv[], data d){
     
     int fc[2]={0,0};
-
+    // argc=0;
+    // for(; argv[argc]!=NULL;argc++) printf("%s\n", argv[argc]);
     for(int i=1;i<argc;i++){
         if(argv[i][0]=='-'){
             for(int j=1; argv[i][j]!='\0'; j++)
@@ -146,8 +147,7 @@ void ls_main(int argc, char* argv[], data d){
         }
     }
 
-    char*flags=(char*)malloc(100); 
-    
+    char flags[7]="";
     if(fc[0]==1) strcat(flags, "l");
     if(fc[1]==1) strcat(flags, "a");
     if(fc[0]==0 && fc[1]==0) {

@@ -28,10 +28,12 @@ void execute_this(int pid,data d, char * s, int* child_pid, char** names){
     }
     else if(strcmp(tok, "ls")==0) {
         char ** parsed = (char**)malloc(sizeof(char*)*10);
+        for(int i=0;i<10;i++) parsed[i]=NULL;
         int i = 0;
         while(tok!=NULL){
             parsed[i] = (char*)malloc(strlen(tok));
             strcpy(parsed[i], tok);
+            // printf("%s\n", tok);
             tok = strtok(NULL, delims);
             i++;
         }
@@ -63,6 +65,7 @@ void execute_this(int pid,data d, char * s, int* child_pid, char** names){
         overkill(child_pid);
     else{
         char ** parsed = (char**)malloc(sizeof(char*)*10);
+        for(int i=0;i<10;i++) parsed[i]=NULL;
         int i = 0;
         while(tok!=NULL){
             parsed[i] = (char*)malloc(strlen(tok));

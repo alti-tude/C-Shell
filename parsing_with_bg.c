@@ -75,7 +75,8 @@ void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** 
     }
 
     if(strcmp(tok, "remindme") == 0) f=strlen(sc);
-    if(strcmp(tok, "overkill")==0 || strcmp(tok, "bg") ==0 || strcmp(tok, "fg")==0 || strcmp(tok, "kjob") == 0 || strcmp(tok, "unsetenv")==0 || strcmp(tok, "cd")==0 || strcmp(tok, "jobs") == 0 || strcmp(tok, "pinfo")==0 || strcmp(tok, "clock")==0 || strcmp(tok, "setenv")==0){
+    if(strcmp(tok, "ls")==0 || strcmp(tok, "echo")==0 || strcmp(tok, "overkill")==0 || strcmp(tok, "bg") ==0 || strcmp(tok, "fg")==0 || strcmp(tok, "kjob") == 0 || strcmp(tok, "unsetenv")==0 || strcmp(tok, "cd")==0 || strcmp(tok, "jobs") == 0 || strcmp(tok, "pinfo")==0 || strcmp(tok, "clock")==0 || strcmp(tok, "setenv")==0){
+        // fprintf(stderr, "%s]\n", sc);
         execute_this(pid, d, sc, child_pid, names);
         return;
     }
@@ -128,15 +129,16 @@ void road_runner(int status , int pid, int* child_pid, data d, char* sc, char** 
 
             while(!sent_to_bg && !quit_proc && waitpid(pid, &status, WNOHANG)!=pid);
 	        for(i=0;i<MAX_PROC && child_pid[i]!=pid;i++);
-            if(!sent_to_bg){
-                child_pid[i]=-1;
-            }
-            else {
+           
+            if(quit_proc) kill(child_pid[i], 9);
+            else if(sent_to_bg){
                 kill(child_pid[i], SIGSTOP);
                 setpgid(pid, pid);            
             }
-            
-            if(quit_proc && child_pid[i]!=-1) kill(child_pid[i], 9);
+            else{
+                child_pid[i]=-1;
+            }
+
             sent_to_bg = 0;
             quit_proc = 0;
         }

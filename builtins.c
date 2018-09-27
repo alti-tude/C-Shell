@@ -41,14 +41,14 @@ void cd(char* input_dir, data d){
 }
 
 void echo(char* buf){
-    char* tok = strtok(buf, delims);
+    char* tok = strtok(buf, " \n\t|");
     if(tok==NULL) return;
-    else tok = strtok(NULL, delims);
+    else tok = strtok(NULL, " \n\t|");
     while(tok!=NULL){
         if(tok[0]!='$') printf("%s ", tok);
         else printf("%s ", getenv(tok+1));
         
-        tok = strtok(NULL, delims);
+        tok = strtok(NULL, " \n\t|");
     }
     printf("\n");
 }
@@ -252,11 +252,11 @@ void fg(char* sc, int* child_pid){
         if(jobID<MAX_PROC && job_order[jobID] >= 0) {
             signal(SIGTSTP, handleZ);
             signal(SIGINT, handleC);
-            // tcsetpgrp(0, child_pid[job_order[jobID]]);
+            int pid = child_pid[job_order[jobID]];
+            // kill(pid, SIGCONT);
             while(!sent_to_bg && !quit_proc && waitpid(child_pid[job_order[jobID]], &status, WNOHANG)!=child_pid[job_order[jobID]]);
             if(quit_proc) kill(child_pid[job_order[jobID]], 9);
 
-            int pid = child_pid[job_order[jobID]];
             if(sent_to_bg){
                 kill(child_pid[job_order[jobID]], SIGSTOP);
                 setpgid(pid, pid);            
@@ -371,7 +371,8 @@ void jobs(int* child_pid, char** names){
             c++;
         }
 
-        printf("%s\t", tok);
+        if(strcmp(tok,"S")==0 || strcmp(tok,"R")==0) printf("Running\t");
+        else printf("Stopped\t");
         printf("%s[%d]\n", names[sorted[i]], pid);
     }
 }
