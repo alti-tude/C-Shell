@@ -1,5 +1,4 @@
 # C-Shell
-=========
 
 ## Run the shell
 ```bash
