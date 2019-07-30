@@ -1,19 +1,25 @@
-# os-shell
+#C-Shell
+=========
 
-coinfig.c
-    has global variables and environment configs
+## Run the shell
+```bash
+make
+./a.out
+```
 
-prompt.c
-    handles the input prompt
+## Commands with Custom Implementations
+1. cd
+2. ls
+3. echo
+4. cat
+5. pid
+6. jobs (list all jobs according)
+7. kjob (to kill a job)
+8. fg (bring a job to foreground)
+9. bg (send a job to background)
 
-builtins.c
-    pwd, echo, cd, remindme, pinfo, clock
-
-ls.c
-    implements ls
-
-utilities.c
-    initialises the shell
-
-main.c
-    controller for everything else
+## Features
+1. All bash commands work (by passing the command to underlying bash environment).
+2. Foreground and background process management.
+3. Piping
+4. Redirection
